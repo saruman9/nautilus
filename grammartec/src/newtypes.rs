@@ -20,20 +20,20 @@ impl RuleID {
 
 impl From<usize> for RuleID {
     fn from(i: usize) -> Self {
-        return RuleID(i);
+        RuleID(i)
     }
 }
 
-impl Into<usize> for RuleID {
-    fn into(self) -> usize {
-        return self.0;
+impl From<RuleID> for usize {
+    fn from(val: RuleID) -> Self {
+        val.0
     }
 }
 
 impl Add<usize> for RuleID {
     type Output = RuleID;
     fn add(self, rhs: usize) -> RuleID {
-        return RuleID(self.0 + rhs);
+        RuleID(self.0 + rhs)
     }
 }
 
@@ -45,13 +45,13 @@ impl NodeID {
 
 impl From<usize> for NodeID {
     fn from(i: usize) -> Self {
-        return NodeID(i);
+        NodeID(i)
     }
 }
 
-impl Into<usize> for NodeID {
-    fn into(self) -> usize {
-        return self.0;
+impl From<NodeID> for usize {
+    fn from(val: NodeID) -> Self {
+        val.0
     }
 }
 
@@ -117,7 +117,7 @@ mod tests {
         let i1: usize = r1.into();
         assert_eq!(i1, 1337);
         let i2: usize = 1338;
-        assert_eq!(i2, r2.into());
+        assert_eq!(i2, r2.0);
         let r3 = r2 + 3;
         assert_eq!(r3, 1341.into());
     }
@@ -129,7 +129,7 @@ mod tests {
         let i1: usize = r1.into();
         assert_eq!(i1, 1337);
         let i2: usize = 1338;
-        assert_eq!(i2, r2.into());
+        assert_eq!(i2, r2.0);
         let r3 = r2 + 3;
         assert_eq!(r3, 1341.into());
     }
@@ -141,7 +141,7 @@ mod tests {
         let i1: usize = r1.into();
         assert_eq!(i1, 1337);
         let i2: usize = 1338;
-        assert_eq!(i2, r2.into());
+        assert_eq!(i2, r2.0);
         let r3 = r2 + 3;
         assert_eq!(r3, 1341.into());
     }
@@ -152,7 +152,8 @@ mod tests {
         let r1: NodeID = x.into();
         let r2 = NodeID::from(y);
         let mut sum_from_nodes = 0;
-        for node in r1..r2 {
+        for node in r1.0..r2.0 {
+            let node = NodeID::from(node);
             sum_from_nodes += node.to_i();
         }
         let mut sum_from_ints = 0;

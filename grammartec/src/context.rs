@@ -3,9 +3,8 @@
 
 use std::collections::HashMap;
 
-
-use rand::{thread_rng, Rng};
 use rand::seq::IteratorRandom;
+use rand::{thread_rng, Rng};
 
 use newtypes::{NTermID, RuleID};
 use pyo3::prelude::PyObject;
@@ -256,29 +255,36 @@ impl Context {
         nt: NTermID,
         p_include_short_rules: usize,
     ) -> impl Iterator<Item = &RuleID> {
-        return self.nts_to_rules[&nt]
+        self.nts_to_rules[&nt]
             .iter()
             .take_while(move |r| self.rules_to_min_size[r] <= max_len)
             .filter(move |r| {
                 self.rules_to_num_options[r] > 1
                     || (thread_rng().gen::<usize>() % 100) <= p_include_short_rules
-            });
+            })
     }
 
     fn dumb_get_random_rule_for_nt(&self, nt: NTermID, max_len: usize) -> RuleID {
-        let p_include_short_rules = if self.nts_to_num_options[&nt] < 10 {
-            100 * 0
-        } else if max_len > 100 {
-            2 * 0
-        } else if max_len > 20 {
-            50 * 0
-        } else {
-            100 * 0
-        };
+        let p_include_short_rules = 0;
+        // let p_include_short_rules = if self.nts_to_num_options[&nt] < 10 {
+        //     100 * 0
+        // } else if max_len > 100 {
+        //     2 * 0
+        // } else if max_len > 20 {
+        //     50 * 0
+        // } else {
+        //     100 * 0
+        // };
 
-        if let Some(opt) = self.get_applicable_rules(max_len, nt, p_include_short_rules).choose(&mut thread_rng())  {
+        if let Some(opt) = self
+            .get_applicable_rules(max_len, nt, p_include_short_rules)
+            .choose(&mut thread_rng())
+        {
             *opt
-        } else if let Some(opt) = self.get_applicable_rules(max_len, nt, 100).choose(&mut thread_rng()) {
+        } else if let Some(opt) = self
+            .get_applicable_rules(max_len, nt, 100)
+            .choose(&mut thread_rng())
+        {
             *opt
         } else {
             panic!(
@@ -289,25 +295,25 @@ impl Context {
     }
 
     pub fn get_random_len_for_ruleid(&self, _rule_id: &RuleID) -> usize {
-        return self.max_len; //TODO?????
+        self.max_len //TODO?????
     }
 
     pub fn get_random_len_for_nt(&self, _nt: &NTermID) -> usize {
-        return self.max_len;
+        self.max_len
     }
 
     pub fn get_rules_for_nt(&self, nt: NTermID) -> &Vec<RuleID> {
-        return &self.nts_to_rules[&nt];
+        &self.nts_to_rules[&nt]
     }
 
     pub fn generate_tree_from_nt(&self, nt: NTermID, max_len: usize) -> Tree {
-        return self.generate_tree_from_rule(self.get_random_rule_for_nt(nt, max_len), max_len - 1);
+        self.generate_tree_from_rule(self.get_random_rule_for_nt(nt, max_len), max_len - 1)
     }
 
     pub fn generate_tree_from_rule(&self, r: RuleID, len: usize) -> Tree {
         let mut tree = Tree::from_rule_vec(vec![], self);
         tree.generate_from_rule(r, len, self);
-        return tree;
+        tree
     }
 }
 
