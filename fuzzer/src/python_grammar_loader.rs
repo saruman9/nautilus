@@ -27,17 +27,19 @@ impl PyContext {
         }
     }
 
-    fn rule(&mut self, py: Python, nt: &str, format: &PyAny) -> PyResult<()> {
-        if let Ok(s) = format.extract::<&str>() {
+    fn rule(&mut self, py: Python, nt: &str, format: Py<PyAny>) /* -> PyResult<()> */
+    {
+        if let Ok(s) = format.extract::<&str>(py) {
             self.ctx.add_rule(nt, s.as_bytes());
-        } else if let Ok(s) = format.extract::<&[u8]>() {
+        } else if let Ok(s) = format.extract::<&[u8]>(py) {
             self.ctx.add_rule(nt, s);
         } else {
-            return Err(pyo3::exceptions::PyValueError::new_err(
-                "format argument should be string or bytes",
-            ));
+            panic!("format argument should be string or bytes");
+            // return Err(pyo3::exceptions::PyValueError::new_err(
+            //     "format argument should be string or bytes",
+            // ));
         }
-        return Ok(());
+        // Ok(())
     }
 
     fn script(&mut self, nt: &str, nts: Vec<String>, script: Py<PyAny>) {
