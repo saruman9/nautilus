@@ -13,14 +13,14 @@ use grammartec::context::Context;
 use grammartec::tree::TreeLike;
 
 use clap::{App, Arg};
+use pyo3::Python;
 use std::fs;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
 
 fn main() {
-
-    pyo3::prepare_freethreaded_python();
+    Python::initialize();
     //Parse parameters
     let matches = App::new("generator")
         .about("Generate strings using a grammar. This can also be used to generate a corpus")

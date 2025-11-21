@@ -1,8 +1,10 @@
 // Nautilus
 // Copyright (C) 2024  Daniel Teuchert, Cornelius Aschermann, Sergej Schumilo
 
+use std::ffi::CString;
+
 use pyo3::prelude::*;
-use pyo3::types::{IntoPyDict};
+use pyo3::types::IntoPyDict;
 
 use crate::Context;
 
@@ -38,7 +40,7 @@ impl PyContext {
         return Ok(());
     }
 
-    fn script(&mut self, nt: &str, nts: Vec<String>, script: PyObject) {
+    fn script(&mut self, nt: &str, nts: Vec<String>, script: Py<PyAny>) {
         self.ctx.add_script(nt, nts, script);
     }
 
@@ -48,18 +50,19 @@ impl PyContext {
 }
 
 fn main_(py: Python, grammar_path: &str) -> PyResult<Context> {
-    let py_ctx = PyCell::new(py, PyContext::new()).unwrap();
-    let locals = [("ctx", py_ctx)].into_py_dict(py);
+    let py_ctx = Bound::new(py, PyContext::new()).unwrap();
+    let locals = [("ctx", &py_ctx)].into_py_dict(py)?;
     py.run(
-        &std::fs::read_to_string(grammar_path).expect("couldn't read grammar file"),
+        CString::new(std::fs::read_to_string(grammar_path).expect("couldn't read grammar file"))?
+            .as_c_str(),
         None,
         Some(&locals),
     )?;
-    return Ok(py_ctx.borrow().get_context());
+    Ok(py_ctx.borrow().get_context())
 }
 
 pub fn load_python_grammar(grammar_path: &str) -> Context {
-    return Python::with_gil(|py| {
+    return Python::attach(|py| {
         main_(py, grammar_path)
             .map_err(|e| e.print_and_set_sys_last_vars(py))
             .unwrap()

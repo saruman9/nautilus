@@ -11,11 +11,11 @@ use context::Context;
 use newtypes::{NTermID, NodeID, RuleID};
 use pyo3::prelude::{PyObject, PyResult, Python};
 use pyo3::types::{PyBytes, PyString, PyTuple};
-use pyo3::FromPyObject;
-use recursion_info::RecursionInfo;
-use rule::{PlainRule, Rule, RuleChild, RuleIDOrCustom, ScriptRule, RegExpRule};
+use pyo3::{FromPyObject, Py, PyAny};
 use rand::thread_rng;
 use rand::Rng;
+use recursion_info::RecursionInfo;
+use rule::{PlainRule, RegExpRule, Rule, RuleChild, RuleIDOrCustom, ScriptRule};
 
 enum UnparseStep<'dat> {
     Term(&'dat [u8]),
@@ -76,9 +76,9 @@ impl<'data, 'tree: 'data, 'ctx: 'data, W: Write, T: TreeLike> Unparser<'data, 't
             self.script(py, num, expr)
                 .map_err(|e| e.print_and_set_sys_last_vars(py))
                 .unwrap();
-            });
+        });
     }
-    fn script(&mut self, py: Python, num: usize, expr: PyObject) -> PyResult<()> {
+    fn script(&mut self, py: Python, num: usize, expr: Py<PyAny>) -> PyResult<()> {
         use pyo3::PyRef;
         let bufs = self.buffers.split_off(self.buffers.len() - num);
         let bufs = bufs
@@ -86,12 +86,12 @@ impl<'data, 'tree: 'data, 'ctx: 'data, W: Write, T: TreeLike> Unparser<'data, 't
             .map(|cur| cur.into_inner())
             .collect::<Vec<_>>();
         let byte_arrays = bufs.iter().map(|b| PyBytes::new(py, b));
-        let res = expr.call1(py, PyTuple::new(py, byte_arrays))?;
-        if let Ok(s) = res.extract::<&str>(py){
+        let res = expr.call1(py, PyTuple::new(py, byte_arrays)?)?;
+        if let Ok(s) = res.extract::<&str>(py) {
             self.write(s.as_bytes());
         } else if let Ok(s) = res.extract::<&[u8]>(py) {
             self.write(&s);
-        } else { 
+        } else {
             return Err(pyo3::exceptions::PyValueError::new_err(
                 "script function should return string or bytes",
             ));
@@ -127,11 +127,11 @@ impl<'data, 'tree: 'data, 'ctx: 'data, W: Write, T: TreeLike> Unparser<'data, 't
 
     fn next_script(&mut self, r: &ScriptRule) {
         {
-            Python::with_gil(|py|{
-            self.stack.push(UnparseStep::Script(
-                r.nonterms.len(),
-                r.script.clone_ref(py),
-            ));
+            Python::with_gil(|py| {
+                self.stack.push(UnparseStep::Script(
+                    r.nonterms.len(),
+                    r.script.clone_ref(py),
+                ));
             });
         }
         for nterm in r.nonterms.iter().rev() {
